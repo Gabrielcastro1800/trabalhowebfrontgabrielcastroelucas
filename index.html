@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nome dos Jogadores</title>
+    
+    <style>
+        body {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            font-weight: 999;
+            height: 100vh;
+            background-image: url('background.jpg'); 
+            background-size: 100%;
+            background-repeat: repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: end;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Stencil Std, fantasy';
+        }
+
+
+        #player-input {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        /* style tabelas(confronto) */
+        #match-table {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="background"></div>
+
+
+    <h1>UFC DIGITAL</h1>
+
+    <form id="player-count-form">
+        <label for="player-count">Quantos jogadores irão jogar?</label>
+        <input type="number" id="player-count" min="1" max="20" required>
+        <button type="button" id="start-game">Iniciar Jogo</button>
+        <button type="button" onclick="carrega()">carregar</button>
+    </form>
+
+    <form id="player-form" style="display: none;">
+        <label for="player-name">Nome do Jogador:</label>
+        <input type="text" id="player-name" required>
+        <button type="button" id="add-player">Adicionar Jogador</button>
+    </form>
+
+    <h2>Jogadores Adicionados:</h2>
+    <ul id="player-list"></ul>
+
+    
+    <div id="match-table" style="display: none;">
+        <h2>Tabela de Vencedores</h2>
+        <table>
+            <thead>
+                
+            </thead>
+            <tbody id="match-results"></tbody>
+        </table>
+    </div>
+
+    <!-- Resultados finais -->
+    <div id="final-results" style="display: none;">
+        <h2>Resultados Finais</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Jogador</th>
+                    <th>Pontos</th>
+                </tr>
+            </thead>
+            <tbody id="final-results-list"></tbody>
+        </table>
+        <button type="button" id="show-history">Histórico de Confrontos</button>
+        <button type="button" id="salvar" onclick="salvar()">salvar resultados</button>
+    </div>
+
+    <!-- Histórico de Confrontos -->
+    <div id="match-history" style="display: none;">
+        <h2>Histórico de Confrontos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Confronto</th>
+                    <th>Vencedor</th>
+                </tr>
+            </thead>
+            <tbody id="match-history-list"></tbody>
+        </table>
+    </div>
+
+    <script>
+        var players = [];
+        var playerPoints = {};
+
+        document.getElementById("start-game").addEventListener("click", function () {
+            var playerCountInput = document.getElementById("player-count");
+            var contarplayer = parseInt(playerCountInput.value);
+
+            if (contarplayer < 1 || contarplayer > 20) {
+                alert("Por favor, insira um número entre 1 e 20.");
+                return;
+            }
+
+            playerCountInput.disabled = true;
+            document.getElementById("start-game").disabled = true;
+
+            var playerForm = document.getElementById("player-form");
+            playerForm.style.display = "block";
+
+            document.getElementById("add-player").addEventListener("click", function () {
+                var playerNameInput = document.getElementById("player-name");
+                var playerName = playerNameInput.value.trim();
+
+                if (playerName === "") {
+                    alert("Por favor, insira um nome de jogador.");
+                    return;
+                }
+
+                if (players.length >= contarplayer) {
+                    alert("Limite de jogadores atingido!");
+                    return;
+                }
+
+                if (players.includes(playerName)) {
+                    alert("Esse jogador já foi adicionado.");
+                    return;
+                }
+
+                players.push(playerName);
+                playerPoints[playerName] = 0;
+                playerNameInput.value = "";
+                updatePlayerList();
+
+                if (players.length === contarplayer) {
+                    playerForm.style.display = "none";
+
+                    // gerar partidas
+                    generateMatches();
+
+                    // tabela vencedores
+                    showMatchTable();
+                }
+            });
+        });
+
+        function updatePlayerList() {
+            var playerList = document.getElementById("player-list");
+            playerList.innerHTML = "";
+
+            for (var i = 0; i < players.length; i++) {
+                var listItem = document.createElement("li");
+                listItem.textContent = players[i];
+                playerList.appendChild(listItem);
+            }
+        }
+
+        let matches = [];
+
+        // algoritmo para as partidas
+        function generateMatches() {
+            for (var i = 0; i < players.length; i++) {
+                for (var j = i + 1; j < players.length; j++) {
+                    matches.push({ player1: players[i], player2: players[j], winner: "" });
+                }
+            }
+        }
+
+        // algoritmo tabela de vencedores
+        function showMatchTable() {
+            var matchTable = document.getElementById("match-table");
+            var matchResults = document.getElementById("match-results");
+            matchTable.style.display = "block";
+            matchResults.innerHTML = "";
+
+            for (var i = 0; i < matches.length; i++) {
+                var match = matches[i];
+                var row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${match.player1} vs ${match.player2}</td>
+                    <td>
+                        <select class="winner-select" data-index="${i}">
+                            <option value="${match.player1}">${match.player1}</option>
+                            <option value="${match.player2}">${match.player2}</option>
+                        </select>
+                    </td>
+                `;
+                matchResults.appendChild(row);
+            }
+
+            //  button calcular os resultados finais
+            var calculateButton = document.createElement("button");
+            calculateButton.textContent = "Calcular Resultados Finais";
+            calculateButton.addEventListener("click", calculateFinalResults);
+            matchResults.appendChild(calculateButton);
+
+        }
+
+        // calcular os resultados finais
+        function calculateFinalResults() {
+            var winnerSelects = document.getElementsByClassName("winner-select");
+
+            for (var i = 0; i < matches.length; i++) {
+                var winner = winnerSelects[i].value;
+                matches[i].winner = winner;
+                playerPoints[winner]++; // add +1 ponto para o vencedor
+            }
+
+            // mostrar os resultados finais na tabela
+            var matchResults = document.getElementById("match-results");
+            matchResults.innerHTML = "";
+
+            // exibir os resultados finais 
+            var finalResults = document.getElementById("final-results");
+            finalResults.style.display = "block";
+            var finalResultsList = document.getElementById("final-results-list");
+            finalResultsList.innerHTML = "";
+
+            // classificar os jogadores com points
+            var sortedPlayers = players.sort(function (a, b) {
+                return playerPoints[b] - playerPoints[a];
+            });
+
+            for (var i = 0; i < sortedPlayers.length; i++) {
+                var playerName = sortedPlayers[i];
+                var row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${playerName}</td>
+                    <td>${playerPoints[playerName]}</td>
+                `;
+                finalResultsList.appendChild(row);
+            }
+
+            // button p/ chamar o historico de confrontos
+            var showHistoryButton = document.getElementById("show-history");
+            showHistoryButton.addEventListener("click", showMatchHistory);
+        }
+
+        // mostrar o histórico de confrontos
+        function showMatchHistory() {
+            var matchTable = document.getElementById("match-table");
+            matchTable.style.display = "none"; // Ocultar a tabela de confrontos
+
+            var finalResults = document.getElementById("final-results");
+            finalResults.style.display = "none"; // Ocultar os resultados finais
+
+            var matchResults = document.getElementById("match-results");
+            matchResults.innerHTML = "";
+
+            // mostrar o histórico de confrontos
+            var matchHistory = document.getElementById("match-history");
+            matchHistory.style.display = "block";
+            var matchHistoryList = document.getElementById("match-history-list");
+            matchHistoryList.innerHTML = "";
+
+            // tabela com historico de matches
+            for (var i = 0; i < matches.length; i++) {
+                var match = matches[i];
+                var row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${match.player1} vs ${match.player2}</td>
+                    <td>Vencedor: ${match.winner}</td>
+                `;
+                matchHistoryList.appendChild(row);
+            }
+        }
+        function salvar(){
+            localStorage.clear();
+            localStorage.setItem("matches",JSON.stringify(matches));
+        }
+        function carrega(){
+ 
+             matches = JSON.parse(localStorage.getItem("matches"));
+           
+            showMatchHistory();
+        }
+    </script>
+</body>
+</html>
+
