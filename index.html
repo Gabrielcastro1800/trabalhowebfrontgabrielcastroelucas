@@ -5,24 +5,30 @@
     <title>Nome dos Jogadores</title>
     
     <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            position: fixed;
+            position: flex;
             top: 0;
             left: 0;
-            width: 100%;
-            font-weight: 999;
             height: 100vh;
-            background-image: url('background.jpg'); 
-            background-size: 100%;
-            background-repeat: repeat;
+            font-weight: 999;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: end;
-            height: 100vh;
             margin: 0;
             font-family: 'Stencil Std, fantasy';
+            background-size: cover;
+            background-position: center;
+            background-image: url(background.jpg);
+            background-repeat: no-repeat;
+            
         }
+
 
 
         #player-input {
@@ -37,8 +43,9 @@
     </style>
 </head>
 <body>
+    
 
-    <div id="background"></div>
+    <div id="background">
 
 
     <h1>UFC DIGITAL</h1>
@@ -68,7 +75,7 @@
             </thead>
             <tbody id="match-results"></tbody>
         </table>
-    </div>
+    
 
     <!-- Resultados finais -->
     <div id="final-results" style="display: none;">
@@ -285,7 +292,8 @@
            
             showMatchHistory();
         }
-    </script>
+    </script></div>
+</div>
 </body>
 </html>
 
